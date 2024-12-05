@@ -5,4 +5,147 @@ format: html
 editor: visual
 ---
 
+## Basic introduction:
 
+-   In this part, the goal is to create models for predicting the Diabetes_binary variable
+-   Use log-loss as the metric the evaluate the models
+-   For both classification tree and random forest model type, use log-loss with 5 fold cross-validation to select the best model, respectively.
+
+### Classification tree
+
+-   A classification tree is a type of decision tree algorithm used for categorical response variables (in this example, Diabetes_binary)
+
+-   The tree starts with a root node and then selects features that best splits the data into classes. At each node there will be a split, creating branches. Splitting stops when a criterion is met. Then at the leaf nodes, the class label is assigned based on the majority class of the training data in that node. To classify a new data point, the tree starts at the root node and follows the branches based on the feature values of the data point until it reaches a leaf node.
+
+-   Nodes represent features; branches represent decision rules; leaves represent class labels (predicted outcomes)
+
+-   Split the data as 70% being training set and 30% being test set
+
+```{r}
+library(tidymodels)
+# Set a seed for reproducibility
+set.seed(123)
+
+# Split the data into training (70%) and test sets (30%)
+# resulting training set size: 177,575; resulting test set size: 76105
+data_split <- initial_split(data, prop = 0.7, strata = Diabetes_binary)
+training_data <- training(data_split)
+test_data <- testing(data_split)
+
+```
+
+-   check the sizes of training and test sets
+
+```{r, eval = FALSE}
+cat("Training set size:", nrow(training_data), "\n")
+cat("Test set size:", nrow(test_data), "\n")
+
+```
+
+-   Fit a classification tree with varying values for the complexity parameter
+
+```{r}
+library(rpart)
+library(rpart.plot)
+library(tidymodels)
+
+training_data <- training_data %>%
+  mutate(Diabetes_binary = as.factor(Diabetes_binary))
+
+# Set seed for reproducibility
+set.seed(123)
+# Choose a smaller dataset without compromising the results (otherwise the execution time is too long)
+small_training_data <- training_data %>%
+  slice_sample(prop = 0.4)
+
+# Specify the classification tree model with 6 predictor variables:  HighBP + HighChol + BMI + PhysActivity + HeartDiseaseorAttack + Age
+tree_recipe <- recipe(Diabetes_binary ~ HighBP + HighChol + BMI + PhysActivity + HeartDiseaseorAttack + Age, 
+                      data = small_training_data)
+
+# Define the classification tree model with tuning parameters
+tree_spec <- decision_tree(
+  cost_complexity = tune(),  # Parameter to tune
+  tree_depth = tune(),       # Parameter to tune
+  min_n = tune()             # Parameter to tune
+) %>%
+  set_mode("classification") %>%
+  set_engine("rpart")
+
+
+# Create a workflow
+tree_workflow <- workflow() %>%
+  add_recipe(tree_recipe) %>%
+  add_model(tree_spec)
+
+
+# Create 5-fold cross-validation folds on the small dataset
+cv_folds <- vfold_cv(small_training_data, v = 5, strata = Diabetes_binary)
+
+# Set up a grid of hyperparameters to tune
+grid <- grid_regular(
+  cost_complexity(),
+  tree_depth(),
+  min_n(),
+  levels = 3
+)
+
+# Tune the model using log-loss. This step takes long time to execute
+set.seed(123)
+
+tree_results <- tune_grid(
+  tree_workflow,
+  resamples = cv_folds,
+  grid = grid,
+  metrics = metric_set(mn_log_loss)  # Use log-loss as the evaluation metric
+)
+
+# Select the best based on log-loss
+best_params <- select_best(tree_results, metric = "mn_log_loss")
+
+# Finalize the workflow with the best parameters
+final_tree <- finalize_workflow(tree_workflow, best_params)
+
+# Train the final model on the training set
+final_tree_fit <- fit(final_tree, data = small_training_data)
+
+# Display the results
+autoplot(tree_results) + labs(title = "Log-Loss for Classification Tree")
+
+# Print the best parameters
+print(best_params)
+
+```
+
+```{r,  eval = FALSE}
+# check the resulting model fit
+tree_results
+final_tree
+final_tree_fit
+```
+
+
+
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```
+
+```{r}
+
+
+
+```

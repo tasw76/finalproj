@@ -5,8 +5,10 @@ format: html
 editor: visual
 ---
 
+## Load the data
 
-## Load the data, preview and check for missing values 
+-   Download, bring in the data, preview, and check for missing values
+
 ```{r}
 library(tidyverse)
 
@@ -18,7 +20,10 @@ colSums(is.na(data))   # No missing noted
 data
 ```
 
-## Preprocess variables. In this part, I convert several variables to factor variables with meaning level names
+## Preprocess variables
+
+-   In this part, I convert several variables to factor variables with meaningful level names
+
 ```{r}
 # convert binary numeric variables to factors
 data <- data %>%
@@ -38,8 +43,11 @@ data
 glimpse(data)
 ```
 
-## Summarizations. 
-### Summary of response variable (Diabetes_binary)
+## Summarizations
+
+-   Summary of the response variable (Diabetes_binary)
+-   It shows there are about 14% of the total population in the data have diabetes
+
 ```{r}
 summary(data)
 # summary of response variable
@@ -50,7 +58,9 @@ print(response_summary)
 
 ```
 
-### Summary of GenHlth
+-   Summary of a predictor 'GenHlth'
+-   The results show the counts and percentages details in each of the five levels of GenHlth: more than 80% of the population is in good, very good, or excellent health condition
+
 ```{r}
 
 genhlth_summary <- data %>%
@@ -60,7 +70,10 @@ genhlth_summary <- data %>%
 print(genhlth_summary)
 
 ```
-### Summary of BMI
+
+-   Summary of a numeric predictor BMI
+-   Results show mean, median, standard deviation, min and max of BMI
+
 ```{r}
 bmi_summary <- data %>%
   summarise(
@@ -74,7 +87,9 @@ print(bmi_summary)
 
 ```
 
-### correlation between Diabetes_binary and BMI (correlation between Diabetes_binary and other predictors are produced but not illustrated here). Based on the correlation between BMI and Diabetes_binary, it seems that they are not significantly correlated - there is a very weak negative correlation between the predictor and the response.
+-   produce a correlation between Diabetes_binary and BMI
+-   the resulting correlation shows that they are not significantly correlated - there is a weak negative correlation (-0.2168) between the predictor and the response. (correlation between Diabetes_binary and other predictors are produced but not illustrated here)
+
 ```{r}
 install.packages("ltm")
 library(ltm)
@@ -84,7 +99,9 @@ print(correlation)
 
 ```
 
-## Produce a stacked bar plot to visualize the relationship between Diabetes_binary and HighBP (other predictors are also plotted but not illustrated here). Based on the plot, it seems that the likelihood of having diabetes is significantly higher if the individual has high blood pressure.
+-   Produce a stacked bar plot to visualize the relationship between Diabetes_binary and HighBP
+-   Based on the plot, it seems that the likelihood of having diabetes is significantly higher if the individual has high blood pressure (other predictors are also plotted but not illustrated here)
+
 ```{r}
 library(ggplot2)
 
@@ -102,44 +119,10 @@ ggplot(data, aes(x = HighBP, fill = Diabetes_binary)) +
     title = "Relationship Between High Blood Pressure and Diabetes"
   ) +
   scale_y_continuous(labels = scales::percent) +
-  theme_minimal()
+  theme_minimal() 
 
 ```
 
 ```{r}
-
-
-
-
+data
 ```
-
-```{r}
-
-
-
-
-```
-
-```{r}
-
-
-
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
