@@ -6,3 +6,140 @@ editor: visual
 ---
 
 
+## Load the data, preview and check for missing values 
+```{r}
+library(tidyverse)
+
+# Load the data
+data <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
+head(data)
+# check for missing values
+colSums(is.na(data))   # No missing noted
+data
+```
+
+## Preprocess variables. In this part, I convert several variables to factor variables with meaning level names
+```{r}
+# convert binary numeric variables to factors
+data <- data %>%
+  mutate(
+    HighBP = factor(HighBP, levels = c(0, 1), labels = c("No", "Yes")),
+    HighChol = factor(HighChol, levels = c(0, 1), labels = c("No", "Yes")),
+    Smoker = factor(Smoker, levels = c(0, 1), labels = c("No", "Yes")),
+    Stroke = factor(Stroke, levels = c(0, 1), labels = c("No", "Yes")),
+    HeartDiseaseorAttack = factor(HeartDiseaseorAttack, levels = c(0, 1), labels = c("No", "Yes")),
+    PhysActivity = factor(PhysActivity, levels = c(0, 1), labels = c("No", "Yes")),
+    Fruits = factor(Fruits, levels = c(0, 1), labels = c("No", "Yes")),
+    HvyAlcoholConsump = factor(HvyAlcoholConsump, levels = c(0, 1), labels = c("No", "Yes")),
+    GenHlth = factor(GenHlth, levels = c(1,2,3,4,5), labels = c("excellent", "very_good", "good", "fair", "poor"))
+  )
+
+data
+glimpse(data)
+```
+
+## Summarizations. 
+### Summary of response variable (Diabetes_binary)
+```{r}
+summary(data)
+# summary of response variable
+response_summary <- data %>%
+  count(Diabetes_binary) %>%
+  mutate(Percentage = round(n / sum(n) * 100, 2))
+print(response_summary)
+
+```
+
+### Summary of GenHlth
+```{r}
+
+genhlth_summary <- data %>%
+  count(GenHlth) %>%
+  mutate(Percentage = round(n / sum(n) * 100, 2))
+
+print(genhlth_summary)
+
+```
+### Summary of BMI
+```{r}
+bmi_summary <- data %>%
+  summarise(
+    Mean = round(mean(BMI, na.rm = TRUE), 2),
+    Median = round(median(BMI, na.rm = TRUE), 2),
+    SD = round(sd(BMI, na.rm = TRUE), 2),
+    Min = round(min(BMI, na.rm = TRUE), 2),
+    Max = round(max(BMI, na.rm = TRUE), 2)
+  )
+print(bmi_summary)
+
+```
+
+### correlation between Diabetes_binary and BMI (correlation between Diabetes_binary and other predictors are produced but not illustrated here). Based on the correlation between BMI and Diabetes_binary, it seems that they are not significantly correlated - there is a very weak negative correlation between the predictor and the response.
+```{r}
+install.packages("ltm")
+library(ltm)
+data$Diabetes_binary <- as.numeric(as.character(data$Diabetes_binary))
+correlation <- biserial.cor(data$BMI, data$Diabetes_binary)
+print(correlation)
+
+```
+
+## Produce a stacked bar plot to visualize the relationship between Diabetes_binary and HighBP (other predictors are also plotted but not illustrated here). Based on the plot, it seems that the likelihood of having diabetes is significantly higher if the individual has high blood pressure.
+```{r}
+library(ggplot2)
+
+# Convert the response to factors 
+data <- data %>%
+  mutate(Diabetes_binary = factor(Diabetes_binary, labels = c("No_Diabetes", "Diabetes")))
+
+# Create a stacked bar plot for HighBP vs Diabetes_binary
+ggplot(data, aes(x = HighBP, fill = Diabetes_binary)) +
+  geom_bar(position = "fill") +
+  labs(
+    x = "High Blood Pressure",
+    y = "Proportion",
+    fill = "Diabetes Status",
+    title = "Relationship Between High Blood Pressure and Diabetes"
+  ) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+
+```
+
+```{r}
+
+
+
+
+```
+
+```{r}
+
+
+
+
+```
+
+```{r}
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
