@@ -46,8 +46,7 @@ set.seed(123)
 # )
 
 # Get row indices for training set
-train_indices <- sample(seq_len(nrow(data)), size = 0.7 * nrow(data))
-
+train_indices <- sample(seq_len(253680), size = floor(0.7 * 253680))
 # Split the data
 training_data <- data[train_indices, ]  # 70% of the data
 test_data <- data[-train_indices, ]        # Remaining 30% of the data
