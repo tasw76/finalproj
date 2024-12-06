@@ -25,6 +25,9 @@ editor: visual
 library(tidymodels)
 library(rsample)
 library(dplyr)
+library(rpart)
+library(rpart.plot)
+library(tibble)
 # Set a seed for reproducibility
 set.seed(123)
 
@@ -48,9 +51,6 @@ train_indices <- sample(seq_len(nrow(data)), size = 0.7 * nrow(data))
 # Split the data
 training_data <- data[train_indices, ]  # 70% of the data
 test_data <- data[-train_indices, ]        # Remaining 30% of the data
-
-training_data <- training(data_split)
-test_data <- testing(data_split)
 
 ```
 
