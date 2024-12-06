@@ -23,6 +23,8 @@ editor: visual
 
 ```{r}
 library(tidymodels)
+library(rsample)
+library(dplyr)
 # Set a seed for reproducibility
 set.seed(123)
 
@@ -33,6 +35,8 @@ data_split <- initial_split(data %>% mutate(Diabetes_binary = factor(Diabetes_bi
                             strata = Diabetes_binary)
 training_data <- training(data_split)
 test_data <- testing(data_split)
+
+
 
 ```
 
