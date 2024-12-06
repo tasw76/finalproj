@@ -49,12 +49,13 @@ set.seed(123)
 train_indices <- sample(seq_len(253680), size = floor(0.7 * 253680))
 my_data <- data 
 # Split the data
-training_data <- slice(data, train_indices)
-test_data <- slice(data, -train_indices)
 
-# training_data <- my_data[train_indices, ]  # 70% of the data
-# test_data <- my_data[-train_indices, ]        # Remaining 30% of the data
+# training_data <- slice(data, train_indices)
+# test_data <- slice(data, -train_indices)
 
+training_data <- my_data[train_indices, ]  # 70% of the data
+test_data <- my_data[-train_indices, ]        # Remaining 30% of the data
+test_data
 ```
 
 
