@@ -91,7 +91,6 @@ print(bmi_summary)
 -   the resulting correlation shows that they are not significantly correlated - there is a weak negative correlation (-0.2168) between the predictor and the response. (correlation between Diabetes_binary and other predictors are produced but not illustrated here)
 
 ```{r}
-install.packages("ltm")
 library(ltm)
 data$Diabetes_binary <- as.numeric(as.character(data$Diabetes_binary))
 correlation <- biserial.cor(data$BMI, data$Diabetes_binary)
