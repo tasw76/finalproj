@@ -30,12 +30,20 @@ set.seed(123)
 
 # Split the data into training (70%) and test sets (30%)
 # resulting training set size: 177,575; resulting test set size: 76105
-data_split <- initial_split(data %>% mutate(Diabetes_binary = factor(Diabetes_binary)), 
-                            prop = 0.7, 
-                            strata = Diabetes_binary)
+
+# data_split <- initial_split(data %>% mutate(Diabetes_binary = factor(Diabetes_binary)), 
+#                             prop = 0.7, 
+#                             strata = Diabetes_binary)
+
+
+data_split <- initial_split(
+  data = data %>% dplyr::mutate(Diabetes_binary = as.factor(Diabetes_binary)), 
+  prop = 0.7, 
+  strata = Diabetes_binary
+)
+
 training_data <- training(data_split)
 test_data <- testing(data_split)
-
 
 
 ```
