@@ -35,16 +35,22 @@ set.seed(123)
 #                             prop = 0.7, 
 #                             strata = Diabetes_binary)
 
+# # not working when rendering
+# data_split <- initial_split(
+#   data = data %>% dplyr::mutate(Diabetes_binary = as.factor(Diabetes_binary)), 
+#   prop = 0.7, 
+#   strata = Diabetes_binary
+# )
 
-data_split <- initial_split(
-  data = data %>% dplyr::mutate(Diabetes_binary = as.factor(Diabetes_binary)), 
-  prop = 0.7, 
-  strata = Diabetes_binary
-)
+# Get row indices for training set
+train_indices <- sample(seq_len(nrow(data)), size = 0.7 * nrow(data))
+
+# Split the data
+training_data <- data[train_indices, ]  # 70% of the data
+test_data <- data[-train_indices, ]        # Remaining 30% of the data
 
 training_data <- training(data_split)
 test_data <- testing(data_split)
-
 
 ```
 
