@@ -59,8 +59,7 @@ small_training_data <- training_data %>%
   slice_sample(prop = 0.4)
 
 # Specify the classification tree model with 6 predictor variables:  HighBP + HighChol + BMI + PhysActivity + HeartDiseaseorAttack + Age
-tree_recipe <- recipe(Diabetes_binary ~ HighBP + HighChol + BMI + PhysActivity + HeartDiseaseorAttack + Age, 
-                      data = small_training_data)
+tree_recipe <- recipe(Diabetes_binary ~ HighBP + HighChol + BMI + PhysActivity + GenHlth + Age, data = small_training_data)
 
 # Define the classification tree model with tuning parameters
 tree_spec <- decision_tree(
@@ -123,29 +122,154 @@ final_tree
 final_tree_fit
 ```
 
+### Random forest
 
-
+-   A random forest is an ensemble machine learning algorithm that builds and combines multiple decision trees to improve accuracy and robustness.
+-   It Creates many decision trees (often hundreds or thousands) from random subsets of the data (bootstrapping). At each split in a tree, only a random subset of predictors is considered. In our case, the previous step uses a classification tree model. And in this step, random forest uses majority voting where the class predicted most often by the trees is chosen.
+-   Random forest improves over a Basic classification tree. It reduces overfitting (averaging the predictions of many trees), and can handle both categorical and numeric variables. Overall, it's more reliable than a single classification tree.
 
 ```{r}
-
-
+install.packages("ranger")
+library(ranger)  # For random forest
 
 ```
 
+-   Fit a random forest model with varying values for the mtry parameter
+-   The fitting is based on 5 fold CV on the training data. 
+-   Include 6 predictors in the model
+-   set 'trees' = 100 and grid levels = 3 to reduce long execution time
+
 ```{r}
+set.seed(123)
+# Take a 10% of the training data to improve the efficiency of model fitting
+rf_training_data <- training_data %>%
+  slice_sample(prop = 0.1)
 
 
+# Specify the random forest model
+rf_spec <- rand_forest(
+  mtry = tune(),  # Number of predictors to randomly select at each split
+  trees = 100,    # Number of trees in the forest
+  min_n = tune()  # Minimum number of data points in a node
+) %>%
+  set_mode("classification") %>%
+  set_engine("ranger")
+
+# Create a recipe including 6 predictors
+rf_recipe <- recipe(Diabetes_binary ~ HighBP + HighChol + BMI + PhysActivity + GenHlth + Age, data = rf_training_data)
+
+# Combine the model and recipe into a workflow
+
+rf_workflow <- workflow() %>%
+  add_model(rf_spec) %>%
+  add_recipe(rf_recipe)
+
+# Define 5-fold cross-validation
+rf_cv_folds <- vfold_cv(rf_training_data, v = 5, strata = Diabetes_binary)
+
+# Define a grid of `mtry` and `min_n` values
+
+rf_grid <- grid_regular(
+  mtry(range = c(2, 6)),  # Test mtry values between 2 and 6
+  min_n(range = c(2, 10)),  # Test min_n values between 2 and 10
+  levels = 3  # Use 3 levels for each parameter
+)
+
+# Tune the random forest model
+set.seed(123)
+
+# this step takes long time to execute
+rf_results <- tune_grid(
+  rf_workflow,
+  resamples = rf_cv_folds,
+  grid = rf_grid,
+  metrics = metric_set(roc_auc)  # Use AUC-ROC as the evaluation metric
+)
+
+# Select the best parameters based on AUC-ROC
+rf_best_params <- select_best(rf_results, metric = "roc_auc")
+
+# Finalize the workflow with the best hyperparameters
+rf_final_workflow <- finalize_workflow(rf_workflow, rf_best_params)
+
+# Fit the final random forest model on the sampled training data
+rf_final_fit <- fit(rf_final_workflow, data = rf_training_data)
+
+# Display the best parameters
+print(rf_best_params)
+
+# Plot the results of the tuning
+autoplot(rf_results) + labs(title = "Random Forest Tuning Results")
+ 
+```
+
+-   Final model selection. Now I have two best models from classification tree and random forest. I fit both to the test set and compare the fitting. 
+
+```{r}
+library(yardstick)
+library(dplyr)
+# Select only the required columns from test_data
+test_data <- test_data %>%
+  dplyr::select(Diabetes_binary, HighBP, HighChol, BMI, PhysActivity, GenHlth, Age)
+```
+
+
+-   Generate predictions for the two best models using test set
+-   Generate the evaluations and save them in metrics
+```{r}
+# Generate predictions for the random forest model
+rf_predictions <- predict(rf_final_fit, test_data, type = "prob") %>%
+  bind_cols(test_data %>% dplyr::select(Diabetes_binary))
+
+# Generate predictions for the classification tree model
+tree_predictions <- predict(final_tree_fit, test_data, type = "prob") %>%
+  bind_cols(test_data %>% dplyr::select(Diabetes_binary))
+
+# Evaluate Random Forest on the test set
+rf_metrics <- rf_predictions %>%
+  roc_auc(truth = Diabetes_binary, .pred_Yes) %>%
+  bind_rows(
+    accuracy(
+      data = rf_predictions %>% 
+        bind_cols(predict(rf_final_fit, test_data, type = "class") %>% rename(.pred_class = .pred_class)),
+      truth = Diabetes_binary,
+      estimate = .pred_class
+    ),
+    mn_log_loss(rf_predictions, truth = Diabetes_binary, .pred_Yes)
+  ) %>%
+  mutate(Model = "Random Forest")
+
+
+# the following is to evaluate the classification tree on the test set
+# Add class predictions explicitly for accuracy calculations
+class_predictions <- predict(final_tree_fit, test_data, type = "class") %>%
+  pull(.pred_class)  # Extract as a vector
+
+# Evaluate the Classification Tree on the test set
+tree_metrics <- tree_predictions %>%
+  roc_auc(truth = Diabetes_binary, .pred_Yes) %>%
+  bind_rows(
+    accuracy(
+      data = tree_predictions %>% mutate(.pred_class = class_predictions),
+      truth = Diabetes_binary,
+      estimate = .pred_class
+    ),
+    mn_log_loss(tree_predictions, truth = Diabetes_binary, .pred_Yes)
+  ) %>%
+  mutate(Model = "Classification Tree")
 
 ```
 
+-   Comparison between the two best models. 
+-   Results show the key metrics (roc_auc, accuracy, mn_log_loss), and based on that, the classification tree is overall marginally better. Both model have low roc_auc, indicating that when given an instance, the models has poor predictive power, can assign it to either class. It seems that both models have high accuracy which is a sign of imbalanced dataset. mn_log_loss is not low for either model, where the classification tree slightly outperform the random forest on this metric.
+
 ```{r}
+# Combine and display results
+comparison_metrics <- bind_rows(rf_metrics, tree_metrics)
 
-
+print("Comparison of Random Forest and Classification Tree Models on the Test Set:")
+comparison_metrics
 
 ```
 
-```{r}
 
-
-
-```

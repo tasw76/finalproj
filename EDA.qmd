@@ -107,7 +107,7 @@ library(ggplot2)
 
 # Convert the response to factors 
 data <- data %>%
-  mutate(Diabetes_binary = factor(Diabetes_binary, labels = c("No_Diabetes", "Diabetes")))
+  mutate(Diabetes_binary = factor(Diabetes_binary, labels = c("No", "Yes")))
 
 # Create a stacked bar plot for HighBP vs Diabetes_binary
 ggplot(data, aes(x = HighBP, fill = Diabetes_binary)) +
