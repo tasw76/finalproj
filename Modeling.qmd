@@ -28,6 +28,23 @@ library(dplyr)
 library(rpart)
 library(rpart.plot)
 library(tibble)
+library(tidyverse)
+
+data1 <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
+data1 <- data1 %>%
+  mutate(
+    HighBP = factor(HighBP, levels = c(0, 1), labels = c("No", "Yes")),
+    HighChol = factor(HighChol, levels = c(0, 1), labels = c("No", "Yes")),
+    Smoker = factor(Smoker, levels = c(0, 1), labels = c("No", "Yes")),
+    Stroke = factor(Stroke, levels = c(0, 1), labels = c("No", "Yes")),
+    HeartDiseaseorAttack = factor(HeartDiseaseorAttack, levels = c(0, 1), labels = c("No", "Yes")),
+    PhysActivity = factor(PhysActivity, levels = c(0, 1), labels = c("No", "Yes")),
+    Fruits = factor(Fruits, levels = c(0, 1), labels = c("No", "Yes")),
+    HvyAlcoholConsump = factor(HvyAlcoholConsump, levels = c(0, 1), labels = c("No", "Yes")),
+    GenHlth = factor(GenHlth, levels = c(1,2,3,4,5), labels = c("excellent", "very_good", "good", "fair", "poor"))
+  )
+data1 <- data1 %>%
+  mutate(Diabetes_binary = factor(Diabetes_binary, labels = c("No", "Yes")))
 # Set a seed for reproducibility
 set.seed(123)
 
@@ -46,16 +63,31 @@ set.seed(123)
 # )
 
 # Get row indices for training set
-train_indices <- sample(seq_len(253680), size = floor(0.7 * 253680))
-my_data <- data 
-# Split the data
+# train_indices <- sample(seq_len(253680), size = floor(0.7 * 253680))
+# my_data <- data 
+# # Split the data
+# 
+# # training_data <- slice(data, train_indices)
+# # test_data <- slice(data, -train_indices)
+# 
+# training_data <- my_data[train_indices, ]  # 70% of the data
+# test_data <- my_data[-train_indices, ]        # Remaining 30% of the data
+# test_data
 
-# training_data <- slice(data, train_indices)
-# test_data <- slice(data, -train_indices)
 
-training_data <- my_data[train_indices, ]  # 70% of the data
-test_data <- my_data[-train_indices, ]        # Remaining 30% of the data
+# data_split <- initial_split(data1, prop = 0.7, strata = Diabetes_binary)
+# training_data <- training(data_split)
+# test_data <- testing(data_split)
+# print(class(data1))
+
+total_rows <- 253680
+train_indices <- sample(seq_len(total_rows), size = floor(0.7 * total_rows))
+
+# Split using `data1`
+training_data <- data1[train_indices, ]
+test_data <- data1[-train_indices, ]
 test_data
+# finally it worked. In Modeling.qmd, I need to do every step that I did in EDA.qmd. Environment of running quarto render is different from that in local PC 
 ```
 
 
@@ -135,10 +167,15 @@ final_tree_fit <- fit(final_tree, data = small_training_data)
 # Display the results
 autoplot(tree_results) + labs(title = "Log-Loss for Classification Tree")
 
-# Print the best parameters
-print(best_params)
+
 
 ```
+
+```{r}
+# Print the best parameters
+print(best_params)
+```
+
 
 ```{r,  eval = FALSE}
 # check the resulting model fit
@@ -154,7 +191,7 @@ final_tree_fit
 -   Random forest improves over a Basic classification tree. It reduces overfitting (averaging the predictions of many trees), and can handle both categorical and numeric variables. Overall, it's more reliable than a single classification tree.
 
 ```{r}
-install.packages("ranger")
+# install.packages("ranger")
 library(ranger)  # For random forest
 
 ```
@@ -220,13 +257,18 @@ rf_final_workflow <- finalize_workflow(rf_workflow, rf_best_params)
 # Fit the final random forest model on the sampled training data
 rf_final_fit <- fit(rf_final_workflow, data = rf_training_data)
 
-# Display the best parameters
-print(rf_best_params)
+
 
 # Plot the results of the tuning
 autoplot(rf_results) + labs(title = "Random Forest Tuning Results")
  
 ```
+
+```{r}
+# Display the best parameters
+print(rf_best_params)
+```
+
 
 -   Final model selection. Now I have two best models from classification tree and random forest. I fit both to the test set and compare the fitting. 
 
@@ -292,7 +334,7 @@ tree_metrics <- tree_predictions %>%
 # Combine and display results
 comparison_metrics <- bind_rows(rf_metrics, tree_metrics)
 
-print("Comparison of Random Forest and Classification Tree Models on the Test Set:")
+# print("Comparison of Random Forest and Classification Tree Models on the Test Set:")
 comparison_metrics
 
 ```

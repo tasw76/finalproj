@@ -13,11 +13,11 @@ editor: visual
 library(tidyverse)
 
 # Load the data
-data <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
-head(data)
+data1 <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
+head(data1)
 # check for missing values
-colSums(is.na(data))   # No missing noted
-data
+colSums(is.na(data1))   # No missing noted
+data1
 ```
 
 ## Preprocess variables
@@ -26,7 +26,7 @@ data
 
 ```{r}
 # convert binary numeric variables to factors
-data <- data %>%
+data1 <- data1 %>%
   mutate(
     HighBP = factor(HighBP, levels = c(0, 1), labels = c("No", "Yes")),
     HighChol = factor(HighChol, levels = c(0, 1), labels = c("No", "Yes")),
@@ -39,8 +39,8 @@ data <- data %>%
     GenHlth = factor(GenHlth, levels = c(1,2,3,4,5), labels = c("excellent", "very_good", "good", "fair", "poor"))
   )
 
-data
-glimpse(data)
+data1
+glimpse(data1)
 ```
 
 ## Summarizations
@@ -49,9 +49,9 @@ glimpse(data)
 -   It shows there are about 14% of the total population in the data have diabetes
 
 ```{r}
-summary(data)
+summary(data1)
 # summary of response variable
-response_summary <- data %>%
+response_summary <- data1 %>%
   count(Diabetes_binary) %>%
   mutate(Percentage = round(n / sum(n) * 100, 2))
 print(response_summary)
@@ -63,7 +63,7 @@ print(response_summary)
 
 ```{r}
 
-genhlth_summary <- data %>%
+genhlth_summary <- data1 %>%
   count(GenHlth) %>%
   mutate(Percentage = round(n / sum(n) * 100, 2))
 
@@ -75,7 +75,7 @@ print(genhlth_summary)
 -   Results show mean, median, standard deviation, min and max of BMI
 
 ```{r}
-bmi_summary <- data %>%
+bmi_summary <- data1 %>%
   summarise(
     Mean = round(mean(BMI, na.rm = TRUE), 2),
     Median = round(median(BMI, na.rm = TRUE), 2),
@@ -92,8 +92,8 @@ print(bmi_summary)
 
 ```{r}
 library(ltm)
-data$Diabetes_binary <- as.numeric(as.character(data$Diabetes_binary))
-correlation <- biserial.cor(data$BMI, data$Diabetes_binary)
+data1$Diabetes_binary <- as.numeric(as.character(data1$Diabetes_binary))
+correlation <- biserial.cor(data1$BMI, data1$Diabetes_binary)
 print(correlation)
 
 ```
@@ -105,11 +105,11 @@ print(correlation)
 library(ggplot2)
 
 # Convert the response to factors 
-data <- data %>%
+data1 <- data1 %>%
   mutate(Diabetes_binary = factor(Diabetes_binary, labels = c("No", "Yes")))
 
 # Create a stacked bar plot for HighBP vs Diabetes_binary
-ggplot(data, aes(x = HighBP, fill = Diabetes_binary)) +
+ggplot(data1, aes(x = HighBP, fill = Diabetes_binary)) +
   geom_bar(position = "fill") +
   labs(
     x = "High Blood Pressure",
@@ -123,5 +123,5 @@ ggplot(data, aes(x = HighBP, fill = Diabetes_binary)) +
 ```
 
 ```{r}
-data
+data1
 ```
